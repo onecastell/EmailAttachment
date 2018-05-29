@@ -14,28 +14,33 @@ public class EmailAttachment{
 	String protocol;
 	String userName;
 	String password;
-	Properties props = new Properties();
+	Properties props;
+   	int recentFound;
 
+   //
 	void initServer(String protocol,String host,int port){
+      this.props = new Properties();
 		props.put("mail.store.protocol", protocol);
 		props.put("mail.imap.host", host);
 		props.put("mail.imap.port", port);
 		props.put("mail.imap.socketFactory" , port );
-		props.put("mail.imap.socketFactory.class" , "javax.net.ssl.SSLSocketFactory" );
-		
+		props.put("mail.imap.socketFactory.class" , "javax.net.ssl.SSLSocketFactory" );	
 	}
-	
+   //
+   void Login(String userName, String password){
+		this.userName = userName;
+		this.password = password;
+      props.put("mail.imap.user", this.userName);
+	}
+   
+   //Default Constructor
 	public EmailAttachment(){
-		
-	   //set default server parameters
-	   initServer("imap","imap.gmail.com",993)
-	   props.put("mail.imap.user", "f.castellanos@adcommdigitel.com");
-	
-
-
+	   //Initilalize Email Server
+	   initServer("imap","imap.gmail.com",993);
 	   //Authenticate
-	   Login("f.castellanos@adcommdigitel.com","5levelsof@"); //use default credentials
-	   try{
+	   Login("f.castellanos@adcommdigitel.com","5levelsof@"); 
+	   
+      try{
 		  //Create Session
 		  Session session = Session.getDefaultInstance(props,new javax.mail.Authenticator(){
 			   protected PasswordAuthentication getPasswordAuthentication(){
@@ -47,11 +52,11 @@ public class EmailAttachment{
 		  store.connect("imap.gmail.com",this.userName,this.password);
 
 		  //Define Folder
-		  Folder inbox = store.getFolder("inbox");
-		  inbox.open(Folder.READ_ONLY);
+		  Folder folder = store.getFolder("inbox");
+		  folder.open(Folder.READ_ONLY);
 
 		  //LOG((String)inbox.getMessageCount());  //get message count
-		  Message[] messages = inbox.getMessages();
+		  Message[] messages = folder.getMessages();
 		  int max = messages.length - 1;
 		  //LOG(messages[messages.length -1].getSubject());
 		  for (int i=max;i>1;i--){
@@ -63,7 +68,8 @@ public class EmailAttachment{
 						MimeBodyPart part = (MimeBodyPart) multiPart.getBodyPart(partCount);
 				  //part.saveFile("C:\\Users\\MN2SALES2\\Downloads" + "thisd");
 				  if((part.getFileName())!=null){
-					 LOG(part.getFileName());
+					 LOG(part.getFileName() + " index: " + i);
+                this.recentFound = i;
 					 System.exit(1);
 				  }
 			   }
@@ -82,22 +88,23 @@ public class EmailAttachment{
 //                      LOG(String.format("%d",i));
 // 							part.saveFile(saveDirectory + File.separator + fileName);
 //                   }
-	protected String getHost(){return this.host;}
-	protected void setHost(String host){this.host=host;}
-	protected String getPort(){return this.port;}
-	protected void setPort(String port){this.port=port;}
+	public String getHost(){return this.host;}
+	public void setHost(String host){this.host=host;}
+	public String getPort(){return this.port;}
+	public void setPort(String port){this.port=port;}
+   public String getUserName(){return this.userName;}
 
-	protected void Login(String userName, String password){
-		this.userName = userName;
-		this.password = password;
-	}
 
 	void LOG(String arg){
 	  System.out.println(arg);
 	}
+   
+   @Override
+   public String toString(){
+     return(String.format("%s%n",getUserName()) ); 
+   }
 
 	 public static void main(String []args){
 	   EmailAttachment email = new EmailAttachment();
-
 	 }
 }

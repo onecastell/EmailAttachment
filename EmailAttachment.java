@@ -6,6 +6,12 @@
 import java.util.Properties;
 import javax.mail.*;
 import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.FileReader;
+import java.io.BufferedWriter;
+import java.io.BufferedReader;
+import java.io.File;
 import javax.mail.internet.MimeBodyPart;
 
 public class EmailAttachment{
@@ -17,6 +23,7 @@ public class EmailAttachment{
 	Properties props;
    int recentFound;  //Index of most recent attachment
    Message[] messages; //All messages from defined folder
+   long start,stop; //Timer variables
 
    //
 	void initServer(String protocol,String host,int port){
@@ -48,7 +55,41 @@ public class EmailAttachment{
 		  //LOG((String)inbox.getMessageCount());  //get message count
 		  messages = folder.getMessages();
       }
-
+   //
+   public void setRecent(int index){
+      try{
+         this.recentFound = index;
+         //Save to file
+         //File db = new File("db.dat");
+         BufferedWriter writer = new BufferedWriter(new FileWriter("db.dat"));
+         writer.write(index);
+         writer.close();
+      }
+      catch(IOException e){e.printStackTrace();}
+      finally{LOG(index);}
+   }
+   //
+   public int getRecent() {
+      int result = 0;
+      try{
+         if (this.recentFound == 0){
+            //check local DB File
+            BufferedReader reader = new BufferedReader(new FileReader("db.dat"));
+            result = reader.read();
+            reader.close();
+            return result;
+         }
+         else return 0;
+       }
+       catch(FileNotFoundException fnfE){
+         //if no file found 
+         LOG("DB does not exist");
+         return 0;
+       }
+       catch(IOException ioE){}
+      return result;
+   }
+   
    //Default Constructor
 	public EmailAttachment(){
 	   //Initilalize Email Server
@@ -58,23 +99,34 @@ public class EmailAttachment{
       try{
          //
          StartSession();
+         beginTime();
+         //Check recently found 
+         if(getRecent()!=0){
+            LOG("Has Recent at: " + getRecent());
+            LOG(messages[getRecent()].getSubject());
+            System.exit(2);
+         }
+         else
+            LOG("No Recent");
+         
 		   int max = messages.length - 1;
-		   for (int i=max;i>1;i--){
+         //int max = 100;
+		   for (int i=max-50;i>1;i--){
 			   if(messages[i].getContentType().contains("multipart") && messages[i].getSubject().contains("Schedule") ){
 			      Multipart multiPart = (Multipart) messages[i].getContent();
 			      int numPart = multiPart.getCount();
 			         for (int partCount = 0; partCount < numPart; partCount++) {
 				         MimeBodyPart part = (MimeBodyPart) multiPart.getBodyPart(partCount);
-				         part.saveFile("tst.xls");
 				         if((part.getFileName())!=null){
 					         LOG(part.getFileName() + " index: " + i);
-                        this.recentFound = i;
-					         System.exit(1);
+                        part.saveFile(part.getFileName());
+                        setRecent(i);
+					         System.exit(1);//exit program
 				         }
 			         }
-			    }
+			    } 
 		    }
-
+          endTime();
 	     }
 		  catch(NoSuchProviderException noProvider){LOG("Provider Exception");}
 		  catch(MessagingException mException){mException.printStackTrace();}
@@ -95,9 +147,15 @@ public class EmailAttachment{
    public String getUserName(){return this.userName;}
 
    //Debug logger
-	void LOG(String arg){
-	  System.out.println(arg);
+	void LOG(Object arg){
+	  System.out.println(arg.toString());
 	}
+   //Timer
+   void beginTime(){ this.start = System.currentTimeMillis();}
+   void endTime(){
+      this.stop = System.currentTimeMillis();
+      LOG("Time Spent:" + (stop - start)/1000 + "secs");
+   }
    
    @Override
    public String toString(){

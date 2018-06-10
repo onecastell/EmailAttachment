@@ -25,71 +25,6 @@ public class EmailAttachment{
    Message[] messages; //All messages from defined folder
    long start,stop; //Timer variables
 
-   //
-	void initServer(String protocol,String host,int port){
-      this.props = new Properties();
-		props.put("mail.store.protocol", protocol);
-		props.put("mail.imap.host", host);
-		props.put("mail.imap.port", port);
-		props.put("mail.imap.socketFactory" , port );
-		props.put("mail.imap.socketFactory.class" , "javax.net.ssl.SSLSocketFactory" );	
-	}
-   //
-   void Login(String userName, String password){
-		this.userName = userName;
-		this.password = password;
-      props.put("mail.imap.user", this.userName);
-	}
-   //
-   void StartSession() throws NoSuchProviderException,MessagingException,IOException{
-         Session session = Session.getDefaultInstance(props,new javax.mail.Authenticator(){
-			   protected PasswordAuthentication getPasswordAuthentication(){
-				  return new PasswordAuthentication(userName, password);
-			   }
-	     });
-        Store store = session.getStore("imaps");
-		  store.connect("imap.gmail.com",this.userName,this.password);
-		  //Define Folder
-		  Folder folder = store.getFolder("inbox");
-		  folder.open(Folder.READ_ONLY); 
-		  //LOG((String)inbox.getMessageCount());  //get message count
-		  messages = folder.getMessages();
-      }
-   //
-   public void setRecent(int index){
-      try{
-         this.recentFound = index;
-         //Save to file
-         //File db = new File("db.dat");
-         BufferedWriter writer = new BufferedWriter(new FileWriter("db.dat"));
-         writer.write(index);
-         writer.close();
-      }
-      catch(IOException e){e.printStackTrace();}
-      finally{LOG(index);}
-   }
-   //
-   public int getRecent() {
-      int result = 0;
-      try{
-         if (this.recentFound == 0){
-            //check local DB File
-            BufferedReader reader = new BufferedReader(new FileReader("db.dat"));
-            result = reader.read();
-            reader.close();
-            return result;
-         }
-         else return 0;
-       }
-       catch(FileNotFoundException fnfE){
-         //if no file found 
-         LOG("DB does not exist");
-         return 0;
-       }
-       catch(IOException ioE){}
-      return result;
-   }
-   
    //Default Constructor
 	public EmailAttachment(){
 	   //Initilalize Email Server
@@ -100,33 +35,32 @@ public class EmailAttachment{
          //
          StartSession();
          beginTime();
-         //Check recently found 
-         if(getRecent()!=0){
-            LOG("Has Recent at: " + getRecent());
-            LOG(messages[getRecent()].getSubject());
+         //Check recently found 1
+         String recent = getRecent();
+         if(recent!=null){
+            LOG("Has Recent at: " + recent);
             System.exit(2);
          }
          else
             LOG("No Recent");
          
-		   int max = messages.length - 1;
-         //int max = 100;
-		   for (int i=max-50;i>1;i--){
+		   int max = messages.length;        
+		   for (int i=max;i>1;i--){
 			   if(messages[i].getContentType().contains("multipart") && messages[i].getSubject().contains("Schedule") ){
 			      Multipart multiPart = (Multipart) messages[i].getContent();
 			      int numPart = multiPart.getCount();
 			         for (int partCount = 0; partCount < numPart; partCount++) {
 				         MimeBodyPart part = (MimeBodyPart) multiPart.getBodyPart(partCount);
-				         if((part.getFileName())!=null){
-					         LOG(part.getFileName() + " index: " + i);
+				         if((part.getFileName())!=null && part.getFileName().contains(".xls")){
                         part.saveFile(part.getFileName());
                         setRecent(i);
+                        endTime();
 					         System.exit(1);//exit program
 				         }
 			         }
 			    } 
 		    }
-          endTime();
+
 	     }
 		  catch(NoSuchProviderException noProvider){LOG("Provider Exception");}
 		  catch(MessagingException mException){mException.printStackTrace();}
@@ -141,11 +75,73 @@ public class EmailAttachment{
 //                   }
 	public String getHost(){return this.host;}
 	public void setHost(String host){this.host=host;}
-   
 	public String getPort(){return this.port;}
 	public void setPort(String port){this.port=port;}
    public String getUserName(){return this.userName;}
-
+   
+   //Initialize server protocol, host and port
+	void initServer(String protocol,String host,int port){
+      this.props = new Properties();
+		props.put("mail.store.protocol", protocol);
+		props.put("mail.imap.host", host);
+		props.put("mail.imap.port", port);
+		props.put("mail.imap.socketFactory" , port );
+		props.put("mail.imap.socketFactory.class" , "javax.net.ssl.SSLSocketFactory" );	
+	}
+   //Define server login credentials
+   void Login(String userName, String password){
+		this.userName = userName;
+		this.password = password;
+      props.put("mail.imap.user", this.userName);
+	}
+   //Start new email server session
+   void StartSession() throws NoSuchProviderException,MessagingException,IOException{
+         Session session = Session.getDefaultInstance(props,new javax.mail.Authenticator(){
+			   protected PasswordAuthentication getPasswordAuthentication(){
+				  return new PasswordAuthentication(userName, password);
+			   }
+	     });
+        Store store = session.getStore("imaps");
+		  store.connect("imap.gmail.com",this.userName,this.password);
+		  //Define Folder
+		  Folder folder = store.getFolder("inbox");
+		  folder.open(Folder.READ_ONLY);
+		  messages = folder.getMessages();
+      }
+   //
+   public void setRecent(int index){
+      try{
+         this.recentFound = index;
+         //Save to file
+         BufferedWriter writer = new BufferedWriter(new FileWriter("db.txt"));
+         writer.write(String.valueOf(index));//Convert to string for writing
+         writer.close();
+      }
+      catch(IOException e){e.printStackTrace();}
+      finally{LOG(index);}
+   }
+   //
+   public String getRecent() {
+      String result = null;
+      try{
+         if (this.recentFound == 0){
+            //check local DB File
+            BufferedReader reader = new BufferedReader(new FileReader("db.txt"));
+            result = reader.readLine();
+            LOG("fetched from file "+ result);
+            reader.close();
+         }
+         else return null;
+       }
+       catch(FileNotFoundException fnfE){
+         //if no file found 
+         LOG("DB does not exist");
+         return null;
+       }
+       catch(IOException ioE){}
+       finally{return result;}
+   }
+   
    //Debug logger
 	void LOG(Object arg){
 	  System.out.println(arg.toString());

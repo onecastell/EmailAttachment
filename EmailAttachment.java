@@ -1,7 +1,7 @@
 /******************************
 *Author:Franklin Castellanos
 *License:None
-*Revision:052618
+*Revision:061118
 *******************************/
 import java.util.Properties;
 import javax.mail.*;
@@ -24,7 +24,7 @@ public class EmailAttachment{
    int recentFound;  //Index of most recent attachment
    Message[] messages; //All messages from defined folder
    long start,stop; //Timer variables
-
+   
    //Default Constructor
 	public EmailAttachment(){
 	   //Initilalize Email Server
@@ -39,12 +39,12 @@ public class EmailAttachment{
          String recent = getRecent();
          if(recent!=null){
             LOG("Has Recent at: " + recent);
-            System.exit(2);
+            //System.exit(2);
          }
          else
             LOG("No Recent");
          
-		   int max = messages.length;        
+		   int max = messages.length - 50;        
 		   for (int i=max;i>1;i--){
 			   if(messages[i].getContentType().contains("multipart") && messages[i].getSubject().contains("Schedule") ){
 			      Multipart multiPart = (Multipart) messages[i].getContent();
@@ -52,10 +52,10 @@ public class EmailAttachment{
 			         for (int partCount = 0; partCount < numPart; partCount++) {
 				         MimeBodyPart part = (MimeBodyPart) multiPart.getBodyPart(partCount);
 				         if((part.getFileName())!=null && part.getFileName().contains(".xls")){
-                        part.saveFile(part.getFileName());
+                        //part.saveFile("attachment.xls");
                         setRecent(i);
                         endTime();
-					         System.exit(1);//exit program
+					         //System.exit(1);//exit program
 				         }
 			         }
 			    } 
@@ -108,27 +108,26 @@ public class EmailAttachment{
 		  folder.open(Folder.READ_ONLY);
 		  messages = folder.getMessages();
       }
-   //
+   //Save index of most recently found attachment
    public void setRecent(int index){
       try{
          this.recentFound = index;
          //Save to file
-         BufferedWriter writer = new BufferedWriter(new FileWriter("db.txt"));
+         BufferedWriter writer = new BufferedWriter(new FileWriter("db.dat"));
          writer.write(String.valueOf(index));//Convert to string for writing
          writer.close();
       }
       catch(IOException e){e.printStackTrace();}
-      finally{LOG(index);}
+      finally{LOG("Index was saved at: "+ index);}
    }
-   //
+   //Get index of most recently found attachment
    public String getRecent() {
       String result = null;
       try{
          if (this.recentFound == 0){
             //check local DB File
-            BufferedReader reader = new BufferedReader(new FileReader("db.txt"));
+            BufferedReader reader = new BufferedReader(new FileReader("db.dat"));
             result = reader.readLine();
-            LOG("fetched from file "+ result);
             reader.close();
          }
          else return null;
@@ -139,7 +138,10 @@ public class EmailAttachment{
          return null;
        }
        catch(IOException ioE){}
-       finally{return result;}
+       finally{
+         LOG("Index pulled from file "+ result);
+         return result;
+       }
    }
    
    //Debug logger
@@ -160,5 +162,8 @@ public class EmailAttachment{
 
 	 public static void main(String []args){
 	   EmailAttachment email = new EmailAttachment();
+      xlsFormatter formatter = new xlsFormatter();
+      formatter.openWorkbook("attachment.xls");
+      formatter.getSheetMatrix();
 	 }
 }

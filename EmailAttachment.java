@@ -1,7 +1,8 @@
 /******************************
 *Author:Franklin Castellanos
 *License:None
-*Revision:061118
+*Revision:082918
+ * *
 *******************************/
 import java.util.Properties;
 import javax.mail.*;
@@ -21,16 +22,16 @@ public class EmailAttachment{
 	String userName;
 	String password;
 	Properties props;
-   int recentFound;  //Index of most recent attachment
-   Message[] messages; //All messages from defined folder
-   long start,stop; //Timer variables
-   
+    int recentFound;  //Index of most recent attachment
+    Message[] messages; //All messages from defined folder
+    long start,stop; //Timer variables
+
    //Default Constructor
 	public EmailAttachment(){
 	   //Initilalize Email Server
 	   initServer("imap","imap.gmail.com",993);
 	   //Authenticate
-	   Login("f.castellanos@adcommdigitel.com","5levelsof@");           
+	   Login("bpsales447@gmail.com","5levelsof@"); //password for testing only
       try{
          //
          StartSession();
@@ -43,10 +44,10 @@ public class EmailAttachment{
          }
          else
             LOG("No Recent");
-         
-		   int max = messages.length - 50;        
+
+		   int max = messages.length - 50;
 		   for (int i=max;i>1;i--){
-			   if(messages[i].getContentType().contains("multipart") && messages[i].getSubject().contains("Schedule") ){
+			   if(messages[i].getContentType().contains("multipart") && messages[i].getSubject().contains("Metrics") ){
 			      Multipart multiPart = (Multipart) messages[i].getContent();
 			      int numPart = multiPart.getCount();
 			         for (int partCount = 0; partCount < numPart; partCount++) {
@@ -58,7 +59,7 @@ public class EmailAttachment{
 					         //System.exit(1);//exit program
 				         }
 			         }
-			    } 
+			    }
 		    }
 
 	     }
@@ -77,24 +78,27 @@ public class EmailAttachment{
 	public void setHost(String host){this.host=host;}
 	public String getPort(){return this.port;}
 	public void setPort(String port){this.port=port;}
-   public String getUserName(){return this.userName;}
+    public String getUserName(){return this.userName;}
    
-   //Initialize server protocol, host and port
+    //Initialize JavaMail server (protocol, host and port)
 	void initServer(String protocol,String host,int port){
-      this.props = new Properties();
-		props.put("mail.store.protocol", protocol);
+	    this.props = new Properties();
+        props.put("mail.store.protocol", protocol);
 		props.put("mail.imap.host", host);
 		props.put("mail.imap.port", port);
 		props.put("mail.imap.socketFactory" , port );
 		props.put("mail.imap.socketFactory.class" , "javax.net.ssl.SSLSocketFactory" );	
 	}
-   //Define server login credentials
-   void Login(String userName, String password){
-		this.userName = userName;
-		this.password = password;
-      props.put("mail.imap.user", this.userName);
-	}
-   //Start new email server session
+
+	//Acquire server login credentials
+    void Login(String userName, String password){
+        this.userName = userName;
+        this.password = password;
+        //Add username to properties
+        props.put("mail.imap.user", this.userName);
+    }
+
+    //Start new JavaMail server session
    void StartSession() throws NoSuchProviderException,MessagingException,IOException{
          Session session = Session.getDefaultInstance(props,new javax.mail.Authenticator(){
 			   protected PasswordAuthentication getPasswordAuthentication(){
@@ -159,11 +163,10 @@ public class EmailAttachment{
    public String toString(){
      return(String.format("%s%n",getUserName()) ); 
    }
-
-	 public static void main(String []args){
-	   EmailAttachment email = new EmailAttachment();
-      xlsFormatter formatter = new xlsFormatter();
-      formatter.openWorkbook("attachment.xls");
-      formatter.getSheetMatrix();
-	 }
+   public static void main(String []args){
+	    EmailAttachment email = new EmailAttachment();
+	    xlsFormatter formatter = new xlsFormatter();
+        formatter.openWorkbook("attachment.xls");
+        formatter.getSheetMatrix();
+	}
 }

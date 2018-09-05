@@ -2,7 +2,7 @@ Author:Franklin Castellanos
 
 License:None
 
-Revision:090118
+Revision:090418
 
 Application that acquires updated metric reports from an IMAP Server.
 Designed to track MTD employee productivity.
@@ -13,6 +13,6 @@ TODO:
 
 -Better Authentication method
 
--Port to Webapp and Android App
+-Port to Webapp/JavaFX and Android App
 
 -Display data in a graph

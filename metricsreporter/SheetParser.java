@@ -18,8 +18,6 @@ public class SheetParser {
     XSSFSheet sheet;
     XSSFRow row;
     Cell cell;
-    int startDate, endDate;
-
 
     public SheetParser(String workbookPath,int sheetIndex){
         try{

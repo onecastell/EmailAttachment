@@ -1,9 +1,9 @@
-package metricsreporter; /******************************
+ /******************************
  * *Author:Franklin Castellanos
  * *License:None
  * *Revision:090118
  *******************************/
-
+package metricsreporter;
 import javax.mail.*;
 import javax.mail.internet.MimeBodyPart;
 import java.io.IOException;
@@ -93,11 +93,11 @@ public class EmailAttachment {
         Folder workingFolder = store.getFolder(folder);
         workingFolder.open(Folder.READ_ONLY);
 
-        messages = new ArrayList<Message>();
+        messages = new ArrayList<>();
         messages.addAll(Arrays.asList(workingFolder.getMessages()));
         //Reverse message order to newest message first
         Collections.reverse(messages); //Adds about 3 secs to search time TODO:optimize
-        workingFolder.close(true);
+        //workingFolder.close(true);
     }
 
     //Filters attachments based on a defined string and a defined extension.

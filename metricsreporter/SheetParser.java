@@ -40,7 +40,7 @@ public class SheetParser {
         for (Row row:sheet){
             for(Cell cell:row) {
                 cellValue = formatter.formatCellValue(cell);
-                if(cellValue.contains(filter))
+                if(cellValue.contains(filter) && cell.getColumnIndex()==1)//added condition to restrict cell column to index 1
                     filteredRows.add(row);
             }
         }
